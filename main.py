@@ -4,7 +4,7 @@ import socket
 #HOST = "192.168.0.107"
 hostname = socket.gethostname()
 
-HOST = socket.gethostname(hostname)
+HOST = socket.gethostbyname(hostname)
 PORT = 8080
 
 
@@ -46,3 +46,5 @@ Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT
 """
 
 comm.sendall(sendBack.encode("utf-8"))
+
+
