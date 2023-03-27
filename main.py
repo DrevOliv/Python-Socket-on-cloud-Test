@@ -5,7 +5,7 @@ import socket
 hostname = socket.gethostname()
 
 HOST = socket.gethostbyname(hostname)
-PORT = 8080
+PORT = 80
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
