@@ -1,23 +1,82 @@
-const Express  = require('express');
+const express = require('express');
+const  Server = require('ws');
 
-const PORT = process.env.PORT || 3000;
-const INDEX = '/index.html';
 
-const server = Express()
-  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
-  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+const app = express()
 
-const { Server } = require('ws');
+app.use(express.json());
 
-const wss = new Server({ server });
 
-wss.on('connection', (ws) => {
-console.log('Client connected');
-ws.on('close', () => console.log('Client disconnected'));
+const key = "TeHVyee453GSjdjuSHhdKSh3837dJS73j738Hdjh7838djhs389Hjshdh"
+
+const CheckAuth = function (req, res, next) {
+
+    const header = req.headers.auth
+
+    if (header) {
+
+        if (header == key) {
+
+            next()
+
+        } else {
+            res.status(404).send(
+                {
+                "Message": "Wrong key"
+                }
+            )
+        }
+
+    } else {
+        res.status(404).send(
+            {
+            "Message": "No header auth"
+            }
+        )
+    }
+
+}
+
+
+
+//app.use(CheckAuth)
+
+
+const PORT = process.env.PORT || 8080;
+
+const server = app.listen(PORT, () => console.log(`It Is ready to rock http://localhost:${PORT}`))
+
+// __________________________Websocket__________________________
+
+const wss = new Server.WebSocketServer({ server }, );
+
+wss.on("upgrade", () => {
+    console.log("uppgrade")
+})
+
+wss.on('connection', () => {
+    console.log('Client connected');
+    wss.on("message", (message) => {
+        console.log("hejhej")
+        res.send(message)
+    }) 
 });
 
-setInterval(() => {
+
+// _________________________Get_________________________________
+
+app.get('/', (req, res) => {
+
+    console.log("request receved")
+
+    
     wss.clients.forEach((client) => {
-      client.send(new Date().toTimeString());
+        client.send(new Date().toTimeString());
     });
-}, 1000);
+
+   wss.on("message", (message) => {
+        console.log("hejhej")
+        res.send(message)
+   }) 
+
+}) 
