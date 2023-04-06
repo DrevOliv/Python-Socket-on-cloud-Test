@@ -42,28 +42,29 @@ const CheckAuth = function (req, res, next) {
 //app.use(CheckAuth)
 
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => console.log(`It Is ready to rock http://localhost:${PORT}`))
 
 // __________________________Websocket__________________________
 
-const wss = new Server.WebSocketServer({ server }, );
+const wss = new Server.WebSocketServer({ server:server }, );
 
-wss.on("upgrade", () => {
-    console.log("uppgrade")
-})
+wss.on('error', console.error);
 
-wss.on('connection', () => {
-    console.log('Client connected');
-    wss.on("message", (message) => {
-        console.log("hejhej")
-        res.send(message)
+wss.on('connection', (ws) => {
+    //ws.send("hejhe")
+
+    ws.on("message", (message) => {
+
+
+        console.log("ClientMessage: ", message.toString("utf-8"))
     }) 
+    console.log('Client connected');
 });
 
 
-// _________________________Get_________________________________
+// _________________________HTTP requests_________________________________
 
 app.get('/', (req, res) => {
 
@@ -74,9 +75,11 @@ app.get('/', (req, res) => {
         client.send(new Date().toTimeString());
     });
 
-   wss.on("message", (message) => {
-        console.log("hejhej")
-        res.send(message)
-   }) 
+    wss.clients.forEach((client) => {
+        client.on("message", (message) => {
+            console.log("dådå")
+            res.send(message.toString("utf-8"))
+       }) 
+    });
 
 }) 
