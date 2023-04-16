@@ -1,21 +1,21 @@
 const express = require('express');
-const  Server = require('ws');
+const WebSocket = require('ws');
 
-
-const app = express()
+const app = express();
 
 app.use(express.json());
 
+app.disable('x-powered-by')
 
 const key = "TeHVyee453GSjdjuSHhdKSh3837dJS73j738Hdjh7838djhs389Hjshdh"
-
-const CheckAuth = function (req, res, next) {
+const CheckAuth = async function (req, res, next) {
 
     const header = req.headers.auth
 
     if (header) {
 
         if (header == key) {
+
 
             next()
 
@@ -37,49 +37,95 @@ const CheckAuth = function (req, res, next) {
 
 }
 
+app.use(CheckAuth)
 
-
-//app.use(CheckAuth)
-
-
-const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, () => console.log(`It Is ready to rock http://localhost:${PORT}`))
-
-// __________________________Websocket__________________________
-
-const wss = new Server.WebSocketServer({ server:server }, );
-
-wss.on('error', console.error);
-
-wss.on('connection', (ws) => {
-    //ws.send("hejhe")
-
-    ws.on("message", (message) => {
-
-
-        console.log("ClientMessage: ", message.toString("utf-8"))
-    }) 
-    console.log('Client connected');
+const server = app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
 });
 
 
-// _________________________HTTP requests_________________________________
+const wsServer = new WebSocket.Server({ server });
 
-app.get('/', (req, res) => {
+const clients = new Map();
 
-    console.log("request receved")
-
+wsServer.on('connection', (socket) => {
     
-    wss.clients.forEach((client) => {
-        client.send(new Date().toTimeString());
-    });
+  console.log('WebSocket client connected.');
 
-    wss.clients.forEach((client) => {
-        client.on("message", (message) => {
-            console.log("dådå")
-            res.send(message.toString("utf-8"))
-       }) 
-    });
 
-}) 
+  socket.on('message', (message) => {
+
+    var ms = message.toString("utf-8")
+
+    if (!clients.has(socket)) {
+
+
+        console.log("message from socket: ", ms)
+
+      if (ms === 'authentication_token') {
+        // Add the client to the map with authenticated status
+        clients.set(socket, true);
+        console.log('WebSocket client authenticated');
+
+      } else {
+
+        socket.close();
+        console.log('WebSocket client authentication failed');
+        
+      }
+    } else {
+
+      console.log('Received WebSocket message:', ms);
+    }
+  });
+
+  // Handle WebSocket connection close
+  socket.on('close', () => {
+    console.log('WebSocket client disconnected.');
+  });
+});
+
+// Define a route for handling the GET request
+app.post('/', async (req, res) => {
+
+    console.log("Got request")
+
+  //const requestData = req.query.data;
+  const requestData = req.body;
+  //const requestData = "request";
+
+  const id = Date.now()
+
+  // Find a connected WebSocket client
+  const socket = wsServer.clients.values().next().value;
+  
+  if (socket) {
+    // Send the request data to the WebSocket client
+    
+    const message = JSON.stringify({"id": id,"ms": requestData})
+
+    socket.send(message);
+    //socket.send(requestData);
+
+    // Set up a one-time 'message' event listener to receive the response
+    socket.once('message', (message) => {
+
+        const ms = JSON.parse(message)
+
+        console.log("message id: ", ms.id)
+
+        if (ms.id == id) {
+
+            // Send the response from the WebSocket client as the response to the GET request
+            res.send('GET request received. Response from WebSocket client: ' + message);
+        
+        }
+
+
+    });
+  } else {
+
+    res.status(500).send('No WebSocket client connected.');
+
+  }
+});
