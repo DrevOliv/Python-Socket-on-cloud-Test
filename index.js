@@ -39,8 +39,10 @@ const CheckAuth = async function (req, res, next) {
 
 app.use(CheckAuth)
 
-const server = app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+
+const server = app.listen(PORT, () => {
+  console.log(`It Is ready to rock http://localhost:${PORT}`);
 });
 
 
